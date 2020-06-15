@@ -2,8 +2,9 @@
 ## Cleaning Data
 * Create EC2 instance
 * Attach ECB volume mentioned snap-e1608d88 https://aws.amazon.com/datasets/transportation-databases/
-** If you can't find the volume while then check that you are in same AWS region
+Note: If you can't find the volume while then check that you are in same AWS region
 * Once EC2 instance is being launch, SSH to the instance
+`ssh -i "id_rsa.pub.pem" ec2-user@ec2-54-82-123-23.compute-1.amazonaws.com`
 * Check attached mount vols using command following command
 `lsblk`
 * sudo mkdir data

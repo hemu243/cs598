@@ -6,20 +6,10 @@ import io
 import os
 from zipfile import ZipFile
 import boto3
-import cStringIO
 import logging
 
 
 # Covert to convert Latin data to utf decode("iso-8859-1")
-
-SELECTED_FIELDS = [
-    'Year', 'Month', 'DayofMonth', 'DayOfWeek', 'FlightDate', 'UniqueCarrier', 'FlightNum', 'Origin', 'Dest',
-    'CRSDepTime', 'DepTime', 'DepDelay', 'DepDelayMinutes', 'CRSArrTime', 'ArrTime', 'ArrDelay', 'ArrDelayMinutes',
-    'Cancelled'
-]
-
-s3client = boto3.client('s3')
-
 logger = logging.getLogger()
 if 'DEBUG' in os.environ and os.environ['DEBUG'] == 'true':
     logger.setLevel(logging.DEBUG)
@@ -28,140 +18,117 @@ else:
     logger.setLevel(logging.INFO)
 
 
-def write_new_csvfiles(dest_bucket, dest_prefix, data):
-    """
-        Will write the processed data as object in an S3 bucket.
-    """
+class ProcessZip:
+    def __init__(self, zip_file, src_bucket, src_bucket_prefix, dst_bucket, dst_bucket_prefix):
+        self.source_key = zip_file
+        self.source_bucket = src_bucket
+        self.src_bucket_prefix = src_bucket_prefix
+        self.dst_bucket = dst_bucket
+        self.dst_bucket_prefix = dst_bucket_prefix
+        self.s3client = boto3.client('s3',
+                     aws_access_key_id=os.environ.get("ACCESS_KEY"),
+                     aws_secret_access_key=os.environ.get("SECRET_KEY"))
+        self.SELECTED_FIELDS = [
+        'Year', 'Month', 'Quarter', 'DayofMonth', 'DayOfWeek', 'FlightDate', 'UniqueCarrier', 'FlightNum', 'Origin', 'Dest',
+        'CRSDepTime', 'DepTime', 'DepDelay', 'DepDelayMinutes', 'CRSArrTime', 'ArrTime', 'ArrDelay', 'ArrDelayMinutes',
+        'Cancelled'
+    ]
 
-    results = {
-        'written_lines': 0,
-        'written_files': []
-    }
-    for year, year_data in data['data'].iteritems():
-        for month, month_data in year_data.iteritems():
-            for day, day_data in month_data.iteritems():
-                output_file = "%s/%04d/%02d/%04d_%02d_%02d.csv" % (
-                    dest_prefix,
-                    year,
-                    month,
-                    year,
-                    month,
-                    day
-                )
-                output = cStringIO.StringIO()
-                writer = csv.DictWriter(output, fieldnames=day_data[0].keys())
-                writer.writeheader()
-                writer.writerows(day_data)
-                results['written_lines'] += len(day_data)
+    def download_and_extract_zipfile(self):
+        """
+            Downloads a zipfile from S3 and returns a list of csv file(s)
+            containing in the zipfile.
 
-                logging.debug('Putting CSV file %s onto S3.' % output_file)
-                s3client.put_object(
-                    Bucket=dest_bucket,
-                    Key=output_file,
-                    Body=output.getvalue(),
-                    ContentType='text/csv'
-                )
-                output.close()
-                results['written_files'].append({
-                    'bucketname': dest_bucket,
-                    'key': output_file
-                })
-                logging.info('Data file %s written to S3 (lines: %d).' % (output_file, len(day_data)))
-    return results
+        """
+        logging.info('Downloading object %s/%s from S3.' % (self.source_bucket, self.source_key))
+        image = self.s3client.get_object(
+            Bucket=self.source_bucket,
+            Key=self.source_key
+        )
 
+        failed_csv_files = []
+        logging.info('Opening and retrieving CSV files from %s.' % self.source_key)
+        tf = io.BytesIO(image["Body"].read())
+        tf.seek(0)
+        zipfile = ZipFile(tf, mode='r')
+        for file in zipfile.namelist():
+            if re.search('.csv$', file):
+                logging.debug('CSV file %s found in object.' % file)
+                with zipfile.open(file, 'r', ) as infile:
+                    reader = csv.DictReader(io.TextIOWrapper(infile, 'utf-8'))
+                    processed_data = self.process_csvfile(file, reader)
+                    if processed_data.get('skipped_nr_lines') > 0:
+                        logger.error("failed to process file=%s", file)
+                        failed_csv_files.append({
+                            "file": file,
+                            "skipped_lines": processed_data.get('skipped_nr_lines')
+                        })
+                    self.write_new_csvfile(file, processed_data.get('data'))
+                    logging.info('CSV file %s saved successfully.' %file)
+        tf.close()
+        zipfile = None
+        tf = None
+        image = None
+        return failed_csv_files
 
-def process_csvfile(csvfile, csvlines):
-    """
-        Parses contents of a csvfile, selects a number of
-        fields and add some aggregated fields.
-        Returns a dict containing the files to be written
-        and uploaded into S3. Content of dict is grouped by year, month and day.
-        {
-            'YYYY': {
-                'MM': {
-                    'DD': {
-                        { 'fieldname1': 'field1', 'fieldname2': 'field2', ... },
-                        ...
-                    }
-                }
-            }
+    def process_csvfile(self, csvfile, csvreader):
+        """
+            Parses contents of a csvfile, filter fields
+        """
+        logging.info("Processing CSV file %s." % csvfile)
+        output_data = []
+        nr_lines = 0
+        skipped_lines = 0
+        for line in csvreader:
+            try:
+                output_line = {i: line[i] for i in self.SELECTED_FIELDS}
+                output_data.append(output_line)
+                nr_lines += 1
+            except IndexError as e:
+                logging.error("Error processing line %s in %s. (%s)" % ('|'.join(line), csvfile, str(e)))
+                skipped_lines +=1
+        logging.info("Processed %d lines from %s." % (nr_lines, csvfile))
+        return {
+            'csvfile': csvfile,
+            'processed_nr_lines': nr_lines,
+            'skipped_nr_lines': skipped_lines,
+            'data': output_data
         }
-    """
-    logging.info("Processing CSV file %s." % csvfile)
-    output_data = {}
 
-    csvreader = csv.DictReader(csvlines)
+    def write_new_csvfile(self, csvfile, data):
+        """
+            Will write the processed data as object in an S3 bucket.
+        """
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+        logging.debug('Putting CSV file %s onto S3.' % csvfile)
+        self.s3client.put_object(
+            Bucket=self.dst_bucket,
+            Key="{0}/{1}".format(self.dst_bucket_prefix, csvfile),
+            Body=output.getvalue(),
+            ContentType='text/csv'
+        )
+        output.close()
 
-    nr_lines = 0
-    skipped_lines = 0
-    logging.debug('Fieldnames: %s' % json.dumps(sorted(csvreader.fieldnames)))
-    for line in csvreader:
+    def execute(self):
+        msg = "success"
+        failed_files = []
         try:
-            output_line = {i: line[i] for i in SELECTED_FIELDS}
-            year = int(line['Year'])
-            month = int(line['Month'])
-            day = int(line['DayofMonth'])
-
-            # # Add value to indicate if flight departed/arrived on time.
-            if year not in output_data:
-                output_data[year] = {}
-            if month not in output_data[year]:
-                output_data[year][month] = {}
-            if day not in output_data[year][month]:
-                output_data[year][month][day] = []
-            output_data[year][month][day].append(output_line)
-            nr_lines += 1
-        except IndexError as e:
-            logging.error("Error processing line %s in %s. (%s)" % ('|'.join(line), csvfile, str(e)))
-    logging.info("Processed %d lines from %s." % (nr_lines, csvfile))
-    return {
-        'csvfile': csvfile,
-        'processed_nr_lines': nr_lines,
-        'skipped_nr_lines': skipped_lines,
-        'data': output_data
-    }
-
-
-def download_and_extract_zipfile(source_bucket, source_key):
-    """
-        Downloads a zipfile from S3 and returns a list of csv file(s)
-        containing in the zipfile.
-        Each item in the list is a dict containing:
-            - filename
-            - content of the csv file (as list of lines)
-            - number of lines in the csv file.
-    """
-
-    logging.info('Downloading object %s/%s from S3.' % (source_bucket, source_key))
-    image = s3client.get_object(
-        Bucket=source_bucket,
-        Key=source_key
-    )
-
-    csvfiles = []
-    logging.info('Opening and retrieving CSV files from %s.' % source_key)
-    tf = io.BytesIO(image["Body"].read())
-    tf.seek(0)
-    zipfile = ZipFile(tf, mode='r')
-    for file in zipfile.namelist():
-        if re.search('.csv$', file):
-            logging.debug('CSV file %s found in object.' % file)
-            lines = zipfile.open(file).readlines()
-            item = {
-                'filename': file,
-                'content': lines,
-                'nr_lines': len(lines)-1
+            failed_files = self.download_and_extract_zipfile()
+        except Exception as e:
+            logger.exception(e)
+            msg = repr(e)
+        finally:
+            return {
+                "key": self.source_key,
+                "failed_csv": failed_files,
+                "message": msg
             }
-            logging.info('CSV file %s read into memory.' % file)
-            csvfiles.append(item)
-    tf.close()
-    zipfile = None
-    tf = None
-    image = None
-    return csvfiles
 
 
-def handle_zipfile(event, context):
+def lambda_handler(event, context):
     """
         event is expected as dictionary
         {
@@ -172,38 +139,25 @@ def handle_zipfile(event, context):
         }
     """
     logging.info('Handler invoked for %s/%s' % (event['src-bucketname'], event['key']))
-    csvfiles = download_and_extract_zipfile(
-        event['src-bucketname'],
-        event['key']
-    )
-    for csvfile in csvfiles:
-
-        logging.info('Processing data from %s.' % csvfile['filename'])
-        processed_data = process_csvfile(csvfile['filename'], csvfile['content'])
-
-        logging.info('Writting processed data from %s.' % csvfile['filename'])
-        results = write_new_csvfiles(event['dst-bucketname'], event['dst-key-prefix'], processed_data)
-
-        logging.info('Validating written data from %s.' % csvfile['filename'])
-        validation_ok = 1
-        if csvfile['nr_lines'] != (processed_data['processed_nr_lines'] + processed_data['skipped_nr_lines']):
-            logging.error('Not all lines from %s were processed. (read: %d vs processed: %d).' %
-                          (csvfile['filename'], csvfile['nr_lines'], processed_data['processed_nr_lines']))
-            validation_ok = 0
-        else:
-            logging.info('All lines read from %s were processed.' % csvfile['filename'])
-        if csvfile['nr_lines'] != (results['written_lines'] + processed_data['skipped_nr_lines']):
-            logging.error('Not all lines from %s were written to S3. (read: %d vs written: %d).' %
-                          (csvfile['filename'], csvfile['nr_lines'], results['written_lines']))
-            validation_ok = 0
-        else:
-            logging.info('All lines read from %s were written to S3 after processing.' % csvfile['filename'])
-
-        if validation_ok == 1:
-            logging.info('--- Processing of file %s completed successfully.' % csvfile['filename'])
-        else:
-            logging.error('+++ Error occured while processing file %s.' % csvfile['filename'])
+    p = ProcessZip(event['key'], event['src-bucketname'], "", event['dst-bucketname'], event['dst-key-prefix'])
+    result = p.execute()
+    validation_ok = 1
+    if result.get('message') != 'success':
+        logger.error("Failed to process zip, file=%s, failed_csv=%s, msg=%s", result['key'], result['failed_csv'],
+                     result["message"])
+        validation_ok = 0
 
     return {
         'status': 'OK' if validation_ok == 1 else 'ERROR'
     }
+
+# Example run
+# if __name__ == "__main__":
+#     p = ProcessZip("2005/On_Time_On_Time_Performance_2005_2.zip", "src-zips", "", "hsc4-clean-data", "test")
+#     p.execute()
+
+def processed_zip_files(file, src_bucket, dest_bucket, dest_prefix):
+    """Returns how many numbers lie within `maximum` and `minimum` in a given `row`"""
+    logger.info("calling async process for file=%s", file)
+    p = ProcessZip(file, src_bucket, "", dest_bucket, dest_prefix)
+    return p.execute()
