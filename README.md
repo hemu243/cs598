@@ -13,4 +13,11 @@ Note: If you can't find the volume while then check that you are in same AWS reg
 * Copy data from EC2 instance folder to s3
 ```aws s3 cp //data/aviation/airline_ontime/ s3://src-zips/ --recursive```
 * Run lambda functions to extracts data from zips files
+* Store unzipped and modified files at new S3 bucket
 
+## Install Hadoop locally (Ubuntu)
+### Install openjdk 8
+`sudo apt install openjdk-8-jdk -y`
+### Set Up a Non-Root User for Hadoop Environment and install
+Reference - https://phoenixnap.com/kb/install-hadoop-ubuntu
+Note
