@@ -20,4 +20,25 @@ Note: If you can't find the volume while then check that you are in same AWS reg
 `sudo apt install openjdk-8-jdk -y`
 ### Set Up a Non-Root User for Hadoop Environment and install
 Reference - https://phoenixnap.com/kb/install-hadoop-ubuntu
-Note
+Update the following setting from the article to make it working
+```bash
+
+.bashrc
+
+export HADOOP_HOME=/home/hadoop/hadoop-3.2.1
+export HADOOP_INSTALL=$HADOOP_HOME
+export HADOOP_MAPRED_HOME=$HADOOP_HOME
+export HADOOP_COMMON_HOME=$HADOOP_HOME
+export HADOOP_HDFS_HOME=$HADOOP_HOME
+export YARN_HOME=$HADOOP_HOME
+export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
+export HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib/"
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+hadoop-env.sh
+
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+export HADOOP_CONF_DIR=${HADOOP_HOME}/etc/hadoop
+```
