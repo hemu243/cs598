@@ -75,6 +75,6 @@ def lambda_handler(event, context):
         logger.info('%d lambda failed to start.' % nr_failed)
 
 # if __name__ == "__main__":
-#     list_files = ListZipFiles('hsc4-clean-data', '').execute()
+#     list_files = ListZipFiles('hsc4-clean-data', 'test').execute()
 #     print(list_files)
 #     print(len(list_files))

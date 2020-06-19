@@ -28,11 +28,6 @@ class ProcessZip:
         self.s3client = boto3.client('s3',
                      aws_access_key_id=os.environ.get("ACCESS_KEY"),
                      aws_secret_access_key=os.environ.get("SECRET_KEY"))
-        self.SELECTED_FIELDS = [
-        'Year', 'Month', 'Quarter', 'DayofMonth', 'DayOfWeek', 'FlightDate', 'UniqueCarrier', 'FlightNum', 'Origin', 'Dest',
-        'CRSDepTime', 'DepTime', 'DepDelay', 'DepDelayMinutes', 'CRSArrTime', 'ArrTime', 'ArrDelay', 'ArrDelayMinutes',
-        'Cancelled'
-    ]
 
     def download_and_extract_zipfile(self):
         """
@@ -81,8 +76,7 @@ class ProcessZip:
         skipped_lines = 0
         for line in csvreader:
             try:
-                output_line = {i: line[i] for i in self.SELECTED_FIELDS}
-                output_data.append(output_line)
+                output_data.append(line)
                 nr_lines += 1
             except IndexError as e:
                 logging.error("Error processing line %s in %s. (%s)" % ('|'.join(line), csvfile, str(e)))
@@ -155,6 +149,7 @@ def lambda_handler(event, context):
 # if __name__ == "__main__":
 #     p = ProcessZip("2005/On_Time_On_Time_Performance_2005_2.zip", "src-zips", "", "hsc4-clean-data", "test")
 #     p.execute()
+
 
 def processed_zip_files(file, src_bucket, dest_bucket, dest_prefix):
     """Returns how many numbers lie within `maximum` and `minimum` in a given `row`"""

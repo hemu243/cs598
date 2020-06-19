@@ -18,7 +18,6 @@ import java.util.stream.Stream;
  */
 public class PopularAirportsPlaintext {
 
-
     public static class Mapper
             extends org.apache.hadoop.mapreduce.Mapper<Object, Text, Text, LongWritable> {
         private final static LongWritable one = new LongWritable(1);
