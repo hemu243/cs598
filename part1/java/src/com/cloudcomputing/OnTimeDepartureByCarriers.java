@@ -23,6 +23,12 @@ public class OnTimeDepartureByCarriers {
             extends Mapper<Object, Text, TupleTextWritable, DoubleWritable> {
         private TupleTextWritable airportAndCarrier = new TupleTextWritable();
         private DoubleWritable departureDelay = new DoubleWritable();
+        private String queryAirport;
+
+        @Override protected void setup(Context context) throws IOException, InterruptedException {
+            Configuration conf = context.getConfiguration();
+            queryAirport = conf.get("query.airport");
+        }
 
         public void map(Object key, Text value, Context context)
                 throws IOException, InterruptedException {
@@ -38,6 +44,10 @@ public class OnTimeDepartureByCarriers {
                             String delayValue = tokens[DEPARTURE_DELAY].replaceAll("\"", "");
                             // Skip empty values
                             if (delayValue.isEmpty()) {
+                                return;
+                            }
+                            // Skip other airport too
+                            if (!airportValue.equals(queryAirport)) {
                                 return;
                             }
                             airportAndCarrier.setFirstKey(airportValue);
@@ -70,6 +80,7 @@ public class OnTimeDepartureByCarriers {
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
+        conf.set("query.airport", args[2]);
         // Standard stuff
         Job job = Job.getInstance(conf, OnTimeDepartureByCarriers.class.getName());
         job.setJarByClass(OnTimeDepartureByCarriers.class);
