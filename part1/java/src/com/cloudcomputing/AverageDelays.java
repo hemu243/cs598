@@ -76,6 +76,9 @@ public class AverageDelays {
         }
     }
 
+    /**
+     * Second job map and reducer
+     */
     public static class TopBestArrivalMapper extends org.apache.hadoop.mapreduce.Mapper<Text, Text, NullWritable, TextArrayWritable> {
         private TreeSet<Pair<Double, String>> countToWordMap =
                 new TreeSet<Pair<Double, String>>();
@@ -108,9 +111,6 @@ public class AverageDelays {
         }
     }
 
-    /**
-     * Second job map and reducer
-     */
     public static class TopBestArrivalReducer extends org.apache.hadoop.mapreduce.Reducer<NullWritable, TextArrayWritable, Text, DoubleWritable> {
         private TreeSet<Pair<Double, String>> countToWordMap =
                 new TreeSet<Pair<Double, String>>();
