@@ -23,70 +23,9 @@ import static com.cloudcomputing.OnTimePerformanceMetadata.*;
 /**
  * This uses airline_ontime data to determine on-time departure performance by airports
  */
-public class OnTimeDepartureByCarriers {
-
-    public static class MyMapper
-            extends Mapper<Object, Text, TupleTextWritable, DoubleWritable> {
-        private TupleTextWritable airportAndCarrier = new TupleTextWritable();
-        private DoubleWritable departureDelay = new DoubleWritable();
-//        private String queryAirport;
-//
-//        @Override protected void setup(Context context) throws IOException, InterruptedException {
-//            Configuration conf = context.getConfiguration();
-//            queryAirport = conf.get("query.airport");
-//        }
-
-        public void map(Object key, Text value, Context context)
-                throws IOException, InterruptedException {
-
-            // Tokenize the content
-            Stream.of(value.toString())
-                    .map(line -> line.split(","))
-                    .filter(tokens -> tokens.length >= DEPARTURE_DELAY)
-                    .forEach(tokens -> {
-                        try {
-                            String carrierValue = tokens[CARRIER_ID].replaceAll("\"", "");
-                            String airportValue = tokens[ORIGIN_AIRPORT].replaceAll("\"", "");
-                            String delayValue = tokens[DEPARTURE_DELAY].replaceAll("\"", "");
-                            // Skip empty values
-                            if (delayValue.isEmpty()) {
-                                return;
-                            }
-                            // Skip other airport too
-//                            if (!airportValue.equals(queryAirport)) {
-//                                return;
-//                            }
-                            airportAndCarrier.setFirstKey(airportValue);
-                            airportAndCarrier.setSecondKey(carrierValue);
-
-                            departureDelay.set(Double.parseDouble(delayValue));
-                            context.write(airportAndCarrier, departureDelay);
-                        } catch (Exception e) {
-                            System.err.println(e);
-                        }
-                    });
-        }
-    }
-
-    public static class MyReducer
-            extends Reducer<TupleTextWritable, DoubleWritable, TupleTextWritable, Text> {
-        public void reduce(TupleTextWritable key, Iterable<DoubleWritable> values, Context context)
-                throws IOException, InterruptedException {
-            double sum = 0;
-            int count = 0;
-            for (DoubleWritable val : values) {
-                sum += val.get();
-                count++;
-            }
-            double average = sum / count;
-            context.write(key, new Text(String.format("%.2f", average)));
-        }
-    }
+public class OnTimeDepartureByCarriersQuery {
 
 
-    /**
-     * Second job map and reducer
-     */
     public static class TextArrayWritable extends ArrayWritable {
         public TextArrayWritable() {
             super(Text.class);
@@ -108,14 +47,24 @@ public class OnTimeDepartureByCarriers {
 
         private final int numberOfTopWords = 10;
 
+        private String queryAirport;
+
         @Override protected void setup(Context context) throws IOException, InterruptedException {
             Configuration conf = context.getConfiguration();
+            queryAirport = conf.get("query.airport");
         }
 
         @Override public void map(Text key, Text value, Context context)
                 throws IOException, InterruptedException {
             Double arrivalDelay = Double.parseDouble(value.toString());
             String word = key.toString();
+
+            String[] fromTo = key.toString().split(" ");
+            //LOG.info("************** Key:"+ key.toString() + ", source=" +source + " item=0=" + fromTo[0] + " dst=" +dst +" item-1="+ fromTo[1]);
+            // Check source and dst
+            if(!fromTo[0].trim().equals(queryAirport)) {
+                return;
+            }
 
             // Hold top 10
             countToWordMap.add(new Pair<Double, String>(arrivalDelay, word));
@@ -174,47 +123,27 @@ public class OnTimeDepartureByCarriers {
     }
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
-//        conf.set("query.airport", args[2]);
-//        FileSystem fs = FileSystem.get(conf);
-//        Path tmpPath = new Path("./w1/tmp");
-//        fs.delete(tmpPath, true);
-
-        // Standard stuff
-        Job job = Job.getInstance(conf, OnTimeDepartureByCarriers.class.getName());
-        job.setJarByClass(OnTimeDepartureByCarriers.class);
-        job.setMapperClass(MyMapper.class);
-        //job.setCombinerClass(Reducer.class);
-        job.setReducerClass(MyReducer.class);
-
-        job.setMapOutputValueClass(DoubleWritable.class);
-        job.setOutputKeyClass(TupleTextWritable.class);
-        job.setOutputValueClass(Text.class);
-
-        FileInputFormat.addInputPath(job, new Path(args[0]));
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
-
-        job.waitForCompletion(true);
+        conf.set("query.airport", args[2]);
 
         // Second job
-//        FileOutputFormat.setOutputPath(job, tmpPath);
-//        Job jobB = Job.getInstance(conf, "Top Carries from a given airport");
-//        jobB.setJarByClass(OnTimeDepartureByCarriers.class);
-//        FileInputFormat.setInputPaths(jobB, tmpPath);
-//        FileOutputFormat.setOutputPath(jobB, new Path(args[1]));
-//
-//        // Set input and outclass
-//        jobB.setInputFormatClass(KeyValueTextInputFormat.class);
-//        jobB.setOutputFormatClass(TextOutputFormat.class);
-//
-//        // Map output class
-//        jobB.setMapOutputKeyClass(NullWritable.class);
-//        jobB.setMapOutputValueClass(TextArrayWritable.class);
-//
-//        jobB.setMapperClass(TopCarriesMapper.class);
-//        jobB.setReducerClass(TopCarriesReducer.class);
-//        jobB.setNumReduceTasks(1);
-//
-//        int code = jobB.waitForCompletion(true) ? 0 : 1;
-//        System.exit(code);
+        Job jobB = Job.getInstance(conf, OnTimeDepartureByCarriersQuery.class.getName());
+        jobB.setJarByClass(OnTimeDepartureByCarriers.class);
+        FileInputFormat.setInputPaths(jobB, new Path(args[0]));
+        FileOutputFormat.setOutputPath(jobB, new Path(args[1]));
+
+        // Set input and outclass
+        jobB.setInputFormatClass(KeyValueTextInputFormat.class);
+        jobB.setOutputFormatClass(TextOutputFormat.class);
+
+        // Map output class
+        jobB.setMapOutputKeyClass(NullWritable.class);
+        jobB.setMapOutputValueClass(TextArrayWritable.class);
+
+        jobB.setMapperClass(TopCarriesMapper.class);
+        jobB.setReducerClass(TopCarriesReducer.class);
+        jobB.setNumReduceTasks(1);
+
+        int code = jobB.waitForCompletion(true) ? 0 : 1;
+        System.exit(code);
     }
 }
