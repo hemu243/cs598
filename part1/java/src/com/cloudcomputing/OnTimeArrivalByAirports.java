@@ -43,6 +43,7 @@ public class OnTimeArrivalByAirports {
                             if (delayValue.isEmpty()) {
                                 return;
                             }
+
                             airportAndCarrier.setFirstKey(originAirportValue);
                             airportAndCarrier.setSecondKey(destAirportValue);
 
