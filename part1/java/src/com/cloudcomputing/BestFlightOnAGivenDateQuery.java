@@ -15,10 +15,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import java.io.IOException;
 import java.util.TreeSet;
 
-/**
- * This uses airline_ontime data to determine on-time departure performance by airports
- */
-public class OnTimeDepartureByAirportsQuery {
+public class BestFlightOnAGivenDateQuery {
     /**
      * Second job map and reducer
      */
@@ -37,32 +34,42 @@ public class OnTimeDepartureByAirportsQuery {
         }
     }
 
-    public static class TopTenDepMapper extends org.apache.hadoop.mapreduce.Mapper<Text, Text, NullWritable, TextArrayWritable> {
+    public static class BestFlightMapper extends org.apache.hadoop.mapreduce.Mapper<Text, Text, NullWritable, TextArrayWritable> {
         private TreeSet<Pair<Double, String>> countToWordMap =
                 new TreeSet<Pair<Double, String>>();
 
-        private final int numberOfTopWords = 10;
+        private final int numberOfTopWords = 1;
 
-        private String queryAirport;
+        private String from;
+        private String am;
+        private String to;
+        private String date;
 
         @Override protected void setup(Context context) throws IOException, InterruptedException {
             Configuration conf = context.getConfiguration();
-            queryAirport = conf.get("query.airport");
+            from = conf.get("query.airport.from");
+            am = conf.get("query.amorpm");
+            to = conf.get("query.airport.to");
+            date = conf.get("query.date");
         }
 
         @Override public void map(Text key, Text value, Context context)
                 throws IOException, InterruptedException {
-            Double arrivalDelay = Double.parseDouble(value.toString());
-            String word = key.toString();
+            String compositeKey = key.toString();
+            String compositeValue = value.toString();
 
-            String[] fromTo = key.toString().split(" ");
+            String[] items = compositeKey.split(" ");
             //LOG.info("************** Key:"+ key.toString() + ", source=" +source + " item=0=" + fromTo[0] + " dst=" +dst +" item-1="+ fromTo[1]);
             // Check source and dst
-            if(!fromTo[0].trim().equals(queryAirport)) {
+            // TODO - compare from to
+            if(!(items[0].trim().equals(from) && items[1].trim().equals(to) && items[2].trim().equals(date) && items[3].trim().equals(am))){
                 return;
             }
+            String[] valuesItems = compositeValue.split(" ");
+            Double arrivalDelay = Double.parseDouble(valuesItems[3]);
 
-            // Hold top 10
+            String word = compositeKey + " " + valuesItems[0] + " " + valuesItems[1] + " " + valuesItems[2];
+            // Hold top value
             countToWordMap.add(new Pair<Double, String>(arrivalDelay, word));
             if (countToWordMap.size() > numberOfTopWords) {
                 // Remove highest
@@ -79,7 +86,7 @@ public class OnTimeDepartureByAirportsQuery {
         }
     }
 
-    public static class TopTenDepReducer extends org.apache.hadoop.mapreduce.Reducer<NullWritable, TextArrayWritable, Text, DoubleWritable> {
+    public static class BestFlightReducer extends org.apache.hadoop.mapreduce.Reducer<NullWritable, TextArrayWritable, Text, DoubleWritable> {
         private TreeSet<Pair<Double, String>> countToWordMap =
                 new TreeSet<Pair<Double, String>>();
 
@@ -97,34 +104,29 @@ public class OnTimeDepartureByAirportsQuery {
                 Double arrivalDelay = Double.parseDouble(pair[1].toString());
 
                 countToWordMap.add(new Pair<Double, String>(arrivalDelay, word));
-                if (countToWordMap.size() > 10) {
+                if (countToWordMap.size() > 1) {
                     countToWordMap.remove(countToWordMap.last());
                 }
             }
 
-//            Iterator<Pair<Long, String>> iterator = countToWordMap.descendingIterator();
-//            // Put output
-//            while(iterator.hasNext()) {
-//                Pair<Long, String> item = iterator.next();
-//                Text word = new Text(item.second);
-//                LongWritable value = new LongWritable(item.first);
-//                context.write(word, value);
-//            }
-            for (Pair<Double, String> item : countToWordMap) {
-                Text word = new Text(item.second);
-                DoubleWritable value = new DoubleWritable(item.first);
-                context.write(word, value);
-            }
+            // Return best flight
+            Pair<Double, String> item = countToWordMap.first();
+            Text word = new Text(item.second);
+            DoubleWritable value = new DoubleWritable(item.first);
+            context.write(word, value);
         }
     }
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
-        conf.set("query.airport", args[2]);
+        conf.set("query.airport.from", args[2]);
+        conf.set("query.airport.to", args[3]);
+        conf.set("query.date", args[4]);
+        conf.set("query.amorpm", args[5]);
 
         // Second job
-        Job jobB = Job.getInstance(conf, OnTimeDepartureByAirportsQuery.class.getName());
-        jobB.setJarByClass(OnTimeDepartureByCarriersQuery.class);
+        Job jobB = Job.getInstance(conf, com.cloudcomputing.BestFlightOnAGivenDateQuery.class.getName());
+        jobB.setJarByClass(BestFlightOnAGivenDateQuery.class);
         FileInputFormat.setInputPaths(jobB, new Path(args[0]));
         FileOutputFormat.setOutputPath(jobB, new Path(args[1]));
 
@@ -136,8 +138,12 @@ public class OnTimeDepartureByAirportsQuery {
         jobB.setMapOutputKeyClass(NullWritable.class);
         jobB.setMapOutputValueClass(TextArrayWritable.class);
 
-        jobB.setMapperClass(TopTenDepMapper.class);
-        jobB.setReducerClass(TopTenDepReducer.class);
+        // Map output class
+        jobB.setMapOutputKeyClass(NullWritable.class);
+        jobB.setMapOutputValueClass(TextArrayWritable.class);
+
+        jobB.setMapperClass(BestFlightMapper.class);
+        jobB.setReducerClass(BestFlightReducer.class);
         jobB.setNumReduceTasks(1);
 
         int code = jobB.waitForCompletion(true) ? 0 : 1;

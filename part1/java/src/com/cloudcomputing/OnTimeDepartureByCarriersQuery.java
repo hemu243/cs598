@@ -127,7 +127,7 @@ public class OnTimeDepartureByCarriersQuery {
 
         // Second job
         Job jobB = Job.getInstance(conf, OnTimeDepartureByCarriersQuery.class.getName());
-        jobB.setJarByClass(OnTimeDepartureByCarriers.class);
+        jobB.setJarByClass(OnTimeDepartureByCarriersQuery.class);
         FileInputFormat.setInputPaths(jobB, new Path(args[0]));
         FileOutputFormat.setOutputPath(jobB, new Path(args[1]));
 
