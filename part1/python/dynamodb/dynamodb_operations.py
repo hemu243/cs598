@@ -4,6 +4,7 @@ import subprocess
 import re
 import sys
 
+
 class DynamodbHandler:
     def __init__(self):
         self.dynamodb = boto3.resource('dynamodb',  aws_access_key_id=os.environ.get("ACCESS_KEY"),
@@ -68,19 +69,22 @@ class DynamodbHandler:
             raise Exception("Failed to store item={}".format(item))
         return response
 
-
-if __name__ == '__main__':
-    # if len(sys.argv) < 3:
-    #     "<table_name> <file_path> path is required"
-    # table_name = sys.argv[1]
-    # file_path = sys.argv[2]
-    handler = DynamodbHandler()
-    table_column_names = {
+table_column_names = {
         'capstone_2_1_airport_carrier_departure': ['airport', 'carrier', 'dep_delay'],
         'capstone_2_2_airport_departure': ['airport', 'airport_to', 'dep_delay'],
         'capstone_2_4_airport_arrival': ['airport', 'carrier', 'arr_delay'],
         'capstone_3_2_best_flight': ['airport_from', 'airport_to', 'given_date', 'am_or_pm', 'carrier', 'flight_num', 'departure_time', 'arr_delay'],
-    }
+}
+
+if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        "<table_name> <file_path> path is required"
+    table_name = sys.argv[1]
+    file_path = sys.argv[2]
+    if table_column_names.get(table_name):
+        raise ValueError("table_name does not exist")
+    handler = DynamodbHandler()
+
 
     # cap_2_1 = handler.create_table('capstone_2_1_airport_carrier_departure', 'airport', 'S', 'carrier', 'S')
     # print("Table status:", cap_2_1.table_status)
@@ -98,8 +102,8 @@ if __name__ == '__main__':
     #                        "/Users/hchoudhary/Documents/Personal Documents/Coursera/MCS-DS-Program/CS598-cc/github/departure_by_carriers_CMI/part-r-00000",
     #                        column_names=['airport', 'carrier', 'dep_delay'])
     #best_flight_YUM_SLC3/part-r-00000
-    handler.read_from_hdfs("capstone_3_2_best_flight",
-                           "/Users/hchoudhary/Documents/Personal Documents/Coursera/MCS-DS-Program/CS598-cc/github/best_flight_YUM_SLC3/part-r-00000",
-                           column_names=['airport_from', 'airport_to', 'given_date', 'am_or_pm', 'carrier', 'flight_num', 'departure_time', 'arr_delay'])
+    handler.read_from_hdfs(table_name,
+                           file_path,
+                           column_names=table_column_names[table_name])
 
 
