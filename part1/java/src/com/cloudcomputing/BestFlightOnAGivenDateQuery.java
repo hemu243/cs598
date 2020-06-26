@@ -1,5 +1,7 @@
 package com.cloudcomputing;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.ArrayWritable;
@@ -19,6 +21,7 @@ public class BestFlightOnAGivenDateQuery {
     /**
      * Second job map and reducer
      */
+    private static final Log LOG = LogFactory.getLog(BestFlightOnAGivenDateQuery.class);
     public static class TextArrayWritable extends ArrayWritable {
         public TextArrayWritable() {
             super(Text.class);
@@ -59,7 +62,7 @@ public class BestFlightOnAGivenDateQuery {
             String compositeValue = value.toString();
 
             String[] items = compositeKey.split(" ");
-            //LOG.info("************** Key:"+ key.toString() + ", source=" +source + " item=0=" + fromTo[0] + " dst=" +dst +" item-1="+ fromTo[1]);
+            // LOG.info("************** Key:"+ key.toString() + ", source=" +items[0] + " to=" + items[1] + " date=" +items[2] +" AM="+ items[3]);
             // Check source and dst
             // TODO - compare from to
             if(!(items[0].trim().equals(from) && items[1].trim().equals(to) && items[2].trim().equals(date) && items[3].trim().equals(am))){
