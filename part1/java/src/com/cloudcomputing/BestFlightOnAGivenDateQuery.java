@@ -51,7 +51,7 @@ public class BestFlightOnAGivenDateQuery {
         @Override protected void setup(Context context) throws IOException, InterruptedException {
             Configuration conf = context.getConfiguration();
             from = conf.get("query.airport.from");
-            am = conf.get("query.amorpm");
+            //am = conf.get("query.amorpm");
             to = conf.get("query.airport.to");
             date = conf.get("query.date");
         }
@@ -65,7 +65,7 @@ public class BestFlightOnAGivenDateQuery {
             // LOG.info("************** Key:"+ key.toString() + ", source=" +items[0] + " to=" + items[1] + " date=" +items[2] +" AM="+ items[3]);
             // Check source and dst
             // TODO - compare from to
-            if(!(items[0].trim().equals(from) && items[1].trim().equals(to) && items[2].trim().equals(date) && items[3].trim().equals(am))){
+            if(!(items[0].trim().equals(from) && items[1].trim().equals(to) && items[2].trim().equals(date))){
                 return;
             }
             String[] valuesItems = compositeValue.split(" ");
@@ -125,7 +125,7 @@ public class BestFlightOnAGivenDateQuery {
         conf.set("query.airport.from", args[2]);
         conf.set("query.airport.to", args[3]);
         conf.set("query.date", args[4]);
-        conf.set("query.amorpm", args[5]);
+        //conf.set("query.amorpm", args[5]);
 
         // Second job
         Job jobB = Job.getInstance(conf, com.cloudcomputing.BestFlightOnAGivenDateQuery.class.getName());

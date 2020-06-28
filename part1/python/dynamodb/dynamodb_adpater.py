@@ -64,7 +64,6 @@ class DynamodbHandler:
         response = table.put_item(
            Item=item
         )
-        print(response)
         if response['ResponseMetadata']['HTTPStatusCode'] != 200:
             raise Exception("Failed to store item={}".format(item))
         return response
@@ -72,7 +71,7 @@ class DynamodbHandler:
 table_column_names = {
         'capstone_2_1_airport_carrier_departure': ['airport', 'carrier', 'dep_delay'],
         'capstone_2_2_airport_departure': ['airport', 'airport_to', 'dep_delay'],
-        'capstone_2_4_airport_arrival': ['airport', 'carrier', 'arr_delay'],
+        'capstone_2_4_airport_arrival': ['airport', 'airport_to', 'arr_delay'],
         'capstone_3_2_best_flight': ['airport_from', 'airport_to', 'given_date', 'am_or_pm', 'carrier', 'flight_num', 'departure_time', 'arr_delay'],
 }
 
@@ -81,7 +80,7 @@ if __name__ == '__main__':
         "<table_name> <file_path> path is required"
     table_name = sys.argv[1]
     file_path = sys.argv[2]
-    if table_column_names.get(table_name):
+    if not table_column_names.get(table_name):
         raise ValueError("table_name does not exist")
     handler = DynamodbHandler()
 
@@ -93,10 +92,10 @@ if __name__ == '__main__':
     # print("Table status:", cap_2_2.table_status)
     #
     # cap_2_4 = handler.create_table('capstone_2_4_airport_arrival', 'airport', 'S', 'airport_to', 'S')
-    # print("Table status:", cap_2_2.table_status)
+    # print("Table status:", cap_2_4.table_status)
     #
     # cap_3_2 = handler.create_table('capstone_3_2_best_flight', 'airport_from', 'S', 'airport_to', 'S')
-    # print("Table status:", cap_2_2.table_status)
+    # print("Table status:", cap_3_2.table_status)
 
     # handler.read_from_hdfs("capstone_2_1_airport_carrier_departure",
     #                        "/Users/hchoudhary/Documents/Personal Documents/Coursera/MCS-DS-Program/CS598-cc/github/departure_by_carriers_CMI/part-r-00000",
