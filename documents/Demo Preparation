@@ -1,0 +1,156 @@
+Demo Preparation
+
+Group 1
+1.1   --- Top 10 most popular Airport based on filght in/out
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.PopularAirportsPlaintext hdfs:///new_data hdfs:///final_popular_airports
+
+hadoop fs -cat hdfs:///avg_delays/part-r-00000
+
+1.2 --- Top 10 least average delay
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.AverageDelays hdfs:///new_data hdfs:///avg_delays
+
+hadoop fs -cat hdfs:///test_arrival/part-r-00000
+
+Group 2
+2.1  -- For each airport X, rank the top-10 carriers in decreasing order of on-time departure performance from X.
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByCarriers hdfs:///new_data hdfs:///departure_by_carriers
+
+CMI 
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByCarriersQuery hdfs:///departure_by_carriers hdfs:///departure_by_carriers_CMPI CMI
+python dynamodb_adpater.py capstone_2_1_airport_carrier_departure hdfs:///departure_by_carriers_CMPI/part-r-00000
+
+BWI
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByCarriersQuery hdfs:///departure_by_carriers hdfs:///departure_by_carriers_BWI BWI
+python dynamodb_adpater.py capstone_2_1_airport_carrier_departure hdfs:///departure_by_carriers_BWI/part-r-00000
+
+MIA
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByCarriersQuery hdfs:///departure_by_carriers hdfs:///departure_by_carriers_MIA MIA
+python dynamodb_adpater.py capstone_2_1_airport_carrier_departure hdfs:///departure_by_carriers_MIA/part-r-00000
+
+LAX
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByCarriersQuery hdfs:///departure_by_carriers hdfs:///departure_by_carriers_LAX LAX
+python dynamodb_adpater.py capstone_2_1_airport_carrier_departure hdfs:///departure_by_carriers_LAX/part-r-00000
+
+IAH
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByCarriersQuery hdfs:///departure_by_carriers hdfs:///departure_by_carriers_IAH IAH
+python dynamodb_adpater.py capstone_2_1_airport_carrier_departure hdfs:///departure_by_carriers_IAH/part-r-00000
+
+SFO
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByCarriersQuery hdfs:///departure_by_carriers hdfs:///departure_by_carriers_SFO SFO
+python dynamodb_adpater.py capstone_2_1_airport_carrier_departure hdfs:///departure_by_carriers_SFO/part-r-00000
+
+-----------------
+
+2.2  -- For each source airport X, rank the top-10 destination airports in decreasing order of on-time departure performance from X.
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByAirports hdfs:///new_data hdfs:///departure_by_airports
+
+CMI
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByAirportsQuery hdfs:///departure_by_airports hdfs:///departure_by_airports_CMI CMI
+python dynamodb_adpater.py capstone_2_2_airport_departure hdfs:///departure_by_airports_CMI/part-r-00000
+
+BWI
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByAirportsQuery hdfs:///departure_by_airports hdfs:///departure_by_airports_BWI BWI
+python dynamodb_adpater.py capstone_2_2_airport_departure hdfs:///departure_by_airports_BWI/part-r-00000
+
+MIA
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByAirportsQuery hdfs:///departure_by_airports hdfs:///departure_by_airports_MIA MIA
+python dynamodb_adpater.py capstone_2_2_airport_departure hdfs:///departure_by_airports_MIA/part-r-00000
+
+LAX
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByAirportsQuery hdfs:///departure_by_airports hdfs:///departure_by_airports_LAX LAX
+python dynamodb_adpater.py capstone_2_2_airport_departure hdfs:///departure_by_airports_LAX/part-r-00000
+
+IAH
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByAirportsQuery hdfs:///departure_by_airports hdfs:///departure_by_airports_IAH IAH
+python dynamodb_adpater.py capstone_2_2_airport_departure hdfs:///departure_by_airports_IAH/part-r-00000
+
+SFO
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeDepartureByAirportsQuery hdfs:///departure_by_airports hdfs:///departure_by_airports_SFO SFO
+python dynamodb_adpater.py capstone_2_2_airport_departure hdfs:///departure_by_airports_SFO/part-r-00000
+
+
+------------
+2.4  -- For each source-destination pair X-Y, determine the mean arrival delay (in minutes) for a flight from X to Y.
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeArrivalByAirports hdfs:///new_data hdfs:///arrival_by_airports
+
+CMI -> ORD 
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeArrivalByAirportsQuery hdfs:///arrival_by_airports hdfs:///arrival_by_airports_CMI_ORD CMI ORD
+python dynamodb_adpater.py capstone_2_4_airport_arrival hdfs:///arrival_by_airports_CMI_ORD/part-r-00000
+
+IND -> CMH
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeArrivalByAirportsQuery hdfs:///arrival_by_airports hdfs:///arrival_by_airports_CMI_ORD CMI ORD
+python dynamodb_adpater.py capstone_2_4_airport_arrival hdfs:///arrival_by_airports_IND_CMH/part-r-00000
+
+DFW -> IAH
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeArrivalByAirportsQuery hdfs:///arrival_by_airports hdfs:///arrival_by_airports_DFW_IAH DFW IAH
+python dynamodb_adpater.py capstone_2_4_airport_arrival hdfs:///arrival_by_airports_DFW_IAH/part-r-00000
+
+LAX -> SFO
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeArrivalByAirportsQuery hdfs:///arrival_by_airports hdfs:///arrival_by_airports_LAX_SFO LAX SFO
+python dynamodb_adpater.py capstone_2_4_airport_arrival hdfs:///arrival_by_airports_LAX_SFO/part-r-00000
+
+JFK -> LAX
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeArrivalByAirportsQuery hdfs:///arrival_by_airports hdfs:///arrival_by_airports_JFK_LAX JFK LAX
+python dynamodb_adpater.py capstone_2_4_airport_arrival hdfs:///arrival_by_airports_JFK_LAX/part-r-00000
+
+ATL -> PHX
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.OnTimeArrivalByAirportsQuery hdfs:///arrival_by_airports hdfs:///arrival_by_airports_ATL_PHX ATL PHX
+python dynamodb_adpater.py capstone_2_4_airport_arrival hdfs:///arrival_by_airports_ATL_PHX/part-r-00000
+
+
+Group 3
+3.1  -- popularity distribution of airports (Build rank of airports)
+
+
+3.2  -- Tom wants to travel from airport X to airport Z. However, Tom also wants to stop at airport Y for some sightseeing on the way. More concretely, Tom has the following requirements (for specific queries, see the Task 1 Queries and Task 2 Queries)
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.BestFlightOnAGivenDate hdfs:///new_data/*2008*.csv hdfs:///best_flights_2008
+
+CMI_ORD_LAX
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.BestFlightOnAGivenDateQuery hdfs:///best_flights_2008 hdfs:///best_flights_2008_CMI_ORD CMI ORD 2008-03-04
+hadoop jar s3://hsc4-jar/hsc4-capstone.jar com.cloudcomputing.BestFlightOnAGivenDateQuery hdfs:///best_flights_2008 hdfs:///best_flights_2008_ORD_LAX ORD LAX 2008-03-06
+
+python dynamodb_adpater.py capstone_3_2_best_flight hdfs:///best_flights_2008_CMI_ORD/part-r-00000
+python dynamodb_adpater.py capstone_3_2_best_flight hdfs:///best_flights_2008_ORD_LAX/part-r-00000
+
+
+
+
+JAX-DFW-CRP
+com.cloudcomputing.BestFlightOnAGivenDateQuery hdfs:///best_flights_2008 hdfs:///best_flights_2008_JAX_DFW JAX DFW 2008-09-09
+com.cloudcomputing.BestFlightOnAGivenDateQuery hdfs:///best_flights_2008 hdfs:///best_flights_2008_DFW_CRP DFW CRP 2008-09-11
+
+
+python dynamodb_adpater.py capstone_3_2_best_flight hdfs:///best_flights_2008_JAX_DFW/part-r-00000
+python dynamodb_adpater.py capstone_3_2_best_flight hdfs:///best_flights_2008_DFW_CRP/part-r-00000
+
+SLC → BFL → LAX, 01/04/2008
+
+com.cloudcomputing.BestFlightOnAGivenDateQuery hdfs:///best_flights_2008 hdfs:///best_flights_2008_SLC_BFL SLC BFL 2008-04-01
+com.cloudcomputing.BestFlightOnAGivenDateQuery hdfs:///best_flights_2008 hdfs:///best_flights_2008_BFL_LAX BFL LAX 2008-04-03
+
+python dynamodb_adpater.py capstone_3_2_best_flight hdfs:///best_flights_2008_SLC_BFL/part-r-00000
+python dynamodb_adpater.py capstone_3_2_best_flight hdfs:///best_flights_2008_BFL_LAX/part-r-00000
+
+
+LAX → SFO → PHX, 12/07/2008:  (14/07/2008)
+com.cloudcomputing.BestFlightOnAGivenDateQuery hdfs:///best_flights_2008 hdfs:///best_flights_2008_LAX_SFO LAX SFO 2008-07-12
+com.cloudcomputing.BestFlightOnAGivenDateQuery hdfs:///best_flights_2008 hdfs:///best_flights_2008_SFO_PHX SFO PHX 2008-07-14
+
+python dynamodb_adpater.py capstone_3_2_best_flight hdfs:///best_flights_2008_LAX_SFO/part-r-00000
+python dynamodb_adpater.py capstone_3_2_best_flight hdfs:///best_flights_2008_SFO_PHX/part-r-00000
+
+
+DFW → ORD → DFW, 10/06/2008: (12/06/2008)
+com.cloudcomputing.BestFlightOnAGivenDateQuery hdfs:///best_flights_2008 hdfs:///best_flights_2008_DFW_ORD DFW ORD 2008-06-10
+com.cloudcomputing.BestFlightOnAGivenDateQuery hdfs:///best_flights_2008 hdfs:///best_flights_2008_ORD_DFW ORD DFW 2008-06-12
+
+python dynamodb_adpater.py capstone_3_2_best_flight hdfs:///best_flights_2008_DFW_ORD/part-r-00000
+python dynamodb_adpater.py capstone_3_2_best_flight hdfs:///best_flights_2008_ORD_DFW/part-r-00000
+
+
+LAX → ORD → JFK: 01/01/2008: (03/01/2008)
+com.cloudcomputing.BestFlightOnAGivenDateQuery hdfs:///best_flights_2008 hdfs:///best_flights_2008_LAX_ORD LAX ORD 2008-01-01
+com.cloudcomputing.BestFlightOnAGivenDateQuery hdfs:///best_flights_2008 hdfs:///best_flights_2008_ORD_JFK ORD JFK 2008-01-03
+
+python dynamodb_adpater.py capstone_3_2_best_flight hdfs:///best_flights_2008_LAX_ORD/part-r-00000
+python dynamodb_adpater.py capstone_3_2_best_flight hdfs:///best_flights_2008_ORD_JFK/part-r-00000
