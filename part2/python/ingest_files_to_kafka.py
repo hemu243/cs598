@@ -5,18 +5,17 @@ This script will ingest files from a certain folder and put it into input topic 
 
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
-from pyspark.streaming.kafka import KafkaUtils
-from kafka import SimpleProducer, KafkaClient
+from kafka import SimpleProducer, KafkaClient, SimpleClient
 import sys
 
 def printResults(rdd):
-    print "----------------- SAMPLE ----------------------"
+    print("----------------- SAMPLE ----------------------")
     for line in rdd.take(10):
-        print line
+        print(line)
 
 def sendToKafka(messages):
-    kafka = KafkaClient('172.31.62.92:9092,172.31.55.234:9092')
-    producer = SimpleProducer(kafka, async=False)
+    kafka = SimpleClient('172.31.62.92:9092,172.31.55.234:9092')
+    producer = SimpleProducer(kafka)
     for message in messages:
         producer.send_messages('input', message.encode())
 
