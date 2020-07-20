@@ -24,7 +24,7 @@ sc.setLogLevel('ERROR')
 # Create a local StreamingContext
 ssc = StreamingContext(sc, 3)
 lines = ssc.textFileStream(sys.argv[1])
-
+print(lines)
 # Split each line by separator
 lines = lines.map(lambda line: line.replace('"', ''))
 rows = lines.map(lambda line: line.split(',')).filter(lambda l: len(l) > 38)
