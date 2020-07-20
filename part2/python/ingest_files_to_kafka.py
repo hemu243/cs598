@@ -20,15 +20,13 @@ def sendToKafka(messages):
 
 sc = SparkContext(appName="IngestFilesToKafka")
 sc.setLogLevel('ERROR')
-
+print(sys.argv[1])
 # Create a local StreamingContext
 ssc = StreamingContext(sc, 3)
 lines = ssc.textFileStream(sys.argv[1])
 # Split each line by separator
 lines = lines.map(lambda line: line.replace('"', ''))
 rows = lines.map(lambda line: line.split(',')).filter(lambda l: len(l) > 38)
-# Print row
-rows.foreachRDD(lambda rdd: printResults(rdd))
 # Drop garbage
 rows = rows.filter(lambda row: len(row[11]) == 3 and len(row[18]) == 3)
 
