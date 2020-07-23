@@ -14,7 +14,7 @@ def printResults(rdd):
         print(line)
 
 def sendToKafka(messages):
-    producer = KafkaProducer(bootstrap_servers="localhost:9092", acks=1)
+    producer = KafkaProducer(bootstrap_servers="b-2.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092,b-1.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092", acks=1)
     for message in messages:
         producer.send('input', message.encode())
 

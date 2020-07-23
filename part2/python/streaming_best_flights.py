@@ -55,7 +55,7 @@ def sendToKafka(records):
 	BOS ATL 2008-04-03 AM FL 270 06:00 7.0
 	ATL LAX 2008-04-05 PM DL 1423 21:45 -2.4
 	"""
-	kafka = KafkaClient('172.31.62.92:9092,172.31.55.234:9092')
+	kafka = KafkaClient('b-2.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092,b-1.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092')
 	producer = SimpleProducer(kafka)
 	for record in records:
 		message = "%s %s %s %s %s %s %s %s" % \

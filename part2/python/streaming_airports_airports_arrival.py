@@ -40,7 +40,7 @@ def sendToKafka(records):
 	JFK LAX -3.013333
 	JFK ORD 0.01113
 	"""
-	kafka = KafkaClient('172.31.62.92:9092,172.31.55.234:9092')
+	kafka = KafkaClient('b-2.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092,b-1.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092')
 	producer = SimpleProducer(kafka)
 	for record in records:
 		message = "%s %s %s" % (record[0][0], record[0][1], record[1])
