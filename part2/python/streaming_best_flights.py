@@ -70,7 +70,7 @@ sc.setLogLevel('ERROR')
 
 # Create a local StreamingContext
 ssc = StreamingContext(sc, 1)
-ssc.checkpoint("s3a://cloudcapstone-checkpoints/checkpoints/checkpoint-best-flights")
+ssc.checkpoint("s3://hsc4-cc-part2-streaming/checkpoints/checkpoint-best-flights")
 lines = KafkaUtils.createDirectStream(ssc, ['input_2008'], \
 	{"metadata.broker.list": sys.argv[1], "auto.offset.reset":"smallest"})
 
