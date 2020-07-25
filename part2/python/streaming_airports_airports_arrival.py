@@ -9,10 +9,10 @@ def printResults(rdd):
     """
     Print partial results to screen.
     """
-    print "----------------- SNAPSHOT ----------------------"
+    print("----------------- SNAPSHOT ----------------------")
     for line in rdd.take(10):
-        print line
-    print "SIZE: %d" % rdd.count()
+        print(line)
+    print("SIZE: %d" % rdd.count())
 
 def saveResults(rdd):
 	"""
