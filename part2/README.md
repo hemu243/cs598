@@ -20,7 +20,12 @@ spark-submit --deploy-mode cluster --master yarn --num-executors 5 --executor-co
 
 spark-submit --deploy-mode cluster --master yarn --num-executors 5 --executor-cores 5 --conf spark.streaming.receiver.maxRate=200000 --packages org.apache.spark:spark-streaming-kafka-0-8_2.11:2.2.0
 
+# SQL for psql
 --package org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0
+
+# S3 package and settings
+--packages com.amazonaws:aws-java-sdk-pom:1.11.760,org.apache.hadoop:hadoop-aws:2.7.0 --conf spark.hadoop.fs.s3a.endpoint=s3.us-east-1.amazonaws.com --conf spark.hadoop.fs.s3a.access.key=AKIAJZUUU2M35YO36C5A --conf spark.hadoop.fs.s3a.secret.key=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
+
 
 ### Good pointer about spark-sumit
 An alternative to change conf/spark-defaults.conf is to use the –conf prop=value flag. I present both the spark-submit flag and the property name to use in the spark-defaults.conf file and –conf flag.
