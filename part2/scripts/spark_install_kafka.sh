@@ -4,6 +4,8 @@ sudo yum install java
 sudo yum install python3-pip
 pip3 install kafka-python
 
+# start-master.sh
+
 # Set below path under ~/.profile or ~/.bash_profile
 export SPARK_HOME=/home/ec2-user/spark-3.0.0-bin-hadoop3.2
 export PATH=$SPARK_HOME/bin:$PATH

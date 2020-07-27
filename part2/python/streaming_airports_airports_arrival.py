@@ -1,8 +1,7 @@
 #!/usr/bin/python
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
-from pyspark.streaming.kafka import KafkaUtils
-from kafka import SimpleProducer, KafkaClient, SimpleClient
+from kafka import KafkaProducer
 import sys
 
 def printResults(rdd):
@@ -40,8 +39,7 @@ def sendToKafka(records):
 	JFK LAX -3.013333
 	JFK ORD 0.01113
 	"""
-	kafka = KafkaClient('b-2.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092,b-1.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092')
-	producer = SimpleProducer(kafka)
+	producer = KafkaProducer(bootstrap_servers='b-2.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092,b-1.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092')
 	for record in records:
 		message = "%s %s %s" % (record[0][0], record[0][1], record[1])
 		producer.send_messages('airports_airports_arrival', message.encode())
@@ -54,7 +52,11 @@ sc.setLogLevel('ERROR')
 # Create a local StreamingContext
 ssc = StreamingContext(sc, 1)
 ssc.checkpoint("s3://hsc4-cc-part2-streaming/checkpoints/checkpoint-airport-airport-arrival")
-lines = KafkaUtils.createDirectStream(ssc, ['input'], {"metadata.broker.list": sys.argv[1], "auto.offset.reset":"smallest"})
+
+lines = ssc.readStream.format("kafka").option("kafka.bootstrap.servers", "b-2.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092,b-1.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092")\
+	.option("subscribe", "input").load()
+
+# lines = KafkaUtils.createDirectStream(ssc, ['input'], {"metadata.broker.list": sys.argv[1], "auto.offset.reset":"smallest"})
 
 # Split each line by separator
 lines = lines.map(lambda tup: tup[1])
