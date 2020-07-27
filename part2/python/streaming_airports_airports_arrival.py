@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from pyspark import SparkContext
-from pyspark.streaming import StreamingContext
+# from pyspark.streaming import StreamingContext
+from pyspark.sql.streaming import DataStreamReader
+from pyspark.sql import SparkSession
 from kafka import KafkaProducer
 import sys
 
@@ -46,14 +48,15 @@ def sendToKafka(records):
 
 # MAIN
 
-sc = SparkContext(appName="AirportAirportArrival")
-sc.setLogLevel('ERROR')
+sc = SparkSession.builder.appName(appName="AirportAirportArrival").getOrCreate()
+# sc = SparkContext(appName="AirportAirportArrival")
+# sc.setLevel('ERROR')
 
 # Create a local StreamingContext
-ssc = StreamingContext(sc, 1)
+# ssc = StreamingContext(sc, 1)
 # ssc.checkpoint("s3a://hsc4-cc-part2-streaming/checkpoints/checkpoint-airport-airport-arrival")
 
-lines = ssc.getOrCreate("/tmp/stream").readStream.format("kafka").option("kafka.bootstrap.servers", "b-2.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092,b-1.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092")\
+lines = sc.readStream().format("kafka").option("kafka.bootstrap.servers", "b-2.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092,b-1.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092")\
 	.option("subscribe", "input").load()
 
 # lines = KafkaUtils.createDirectStream(ssc, ['input'], {"metadata.broker.list": sys.argv[1], "auto.offset.reset":"smallest"})
