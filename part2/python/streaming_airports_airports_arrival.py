@@ -53,7 +53,7 @@ sc.setLogLevel('ERROR')
 ssc = StreamingContext(sc, 1)
 # ssc.checkpoint("s3a://hsc4-cc-part2-streaming/checkpoints/checkpoint-airport-airport-arrival")
 
-lines = ssc.getOrCreate().readStream.format("kafka").option("kafka.bootstrap.servers", "b-2.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092,b-1.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092")\
+lines = ssc.getOrCreate("/tmp/stream").readStream.format("kafka").option("kafka.bootstrap.servers", "b-2.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092,b-1.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092")\
 	.option("subscribe", "input").load()
 
 # lines = KafkaUtils.createDirectStream(ssc, ['input'], {"metadata.broker.list": sys.argv[1], "auto.offset.reset":"smallest"})
