@@ -62,12 +62,14 @@ sc = SparkSession.builder.appName("AirportAirportArrival").getOrCreate()
 # ssc = StreamingContext(sc, 1)
 # ssc.checkpoint("s3a://hsc4-cc-part2-streaming/checkpoints/checkpoint-airport-airport-arrival")
 
-lines = sc.readStream.format("kafka").option("kafka.bootstrap.servers",
+df = sc.readStream.format("kafka").option("kafka.bootstrap.servers",
                                                "b-2.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092,b-1.kafka-cluster-1.rp7oyu.c8.kafka.us-east-1.amazonaws.com:9092") \
     .option("subscribe", "input").load()
 
 # lines = KafkaUtils.createDirectStream(ssc, ['input'], {"metadata.broker.list": sys.argv[1], "auto.offset.reset":"smallest"})
 
+# Split key and value as string
+lines = df.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
 # Split each line by separator
 lines = lines.map(lambda tup: tup[1])
 rows = lines.map(lambda line: line.split())
